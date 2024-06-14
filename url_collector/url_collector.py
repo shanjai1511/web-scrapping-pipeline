@@ -61,7 +61,7 @@ def main():
         return
     except yaml.YAMLError as e:
         print_status("error", "", f"Error loading YAML configuration file: {e}")
-        return ""
+        return
 
     module_name = f"{site_name}_{project_name}"
     module_path = os.path.join(fetcher_dir, "jbhifi_nz_com_apple_aus.py")
