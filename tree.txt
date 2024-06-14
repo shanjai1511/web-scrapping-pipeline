@@ -1,0 +1,37 @@
+Folder PATH listing for volume OS
+Volume serial number is 22D4-7B22
+C:.
+|   common_module.py
+|   creation_script.py
+|   delete_files_automated.py
+|   tree.txt
+|   
++---scrape_output
+|   +---collector_output
+|   |   \---apple_aus
+|   |           jbhifi_nz_com_apple_aus.txt
+|   |           
+|   +---extractor_output
+|   |   \---apple_aus
+|   |           jbhifi_nz_com_apple_aus.xlsx
+|   |           
+|   \---fetcher_output
+|       \---apple_aus
+|           \---jbhifi_nz_com_apple_aus
++---url_collector
+|   |   url_collector.py
+|   |   
+|   \---apple_aus
+|           jbhifi_nz_com_apple_aus.py
+|           jbhifi_nz_com_apple_aus.yml
+|           
++---url_data_extractor
+|   \---apple_aus
+|           jbhifi_nz_com_apple_aus.py
+|           jbhifi_nz_com_apple_aus.yml
+|           
+\---url_fetcher
+    \---apple_aus
+            jbhifi_nz_com_apple_aus.py
+            jbhifi_nz_com_apple_aus.yml
+            
