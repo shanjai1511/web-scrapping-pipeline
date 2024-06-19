@@ -1,6 +1,7 @@
 import requests
 from lxml import etree
-
+import os
+import sys
 def print_status(status, url, info=""):
     status_message = {
         "status": status,
