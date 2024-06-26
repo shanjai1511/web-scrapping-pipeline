@@ -79,17 +79,27 @@ def main():
     scrape_output_path = os.path.join(base_dir, 'scrape_output')
     
     # Content for each file type
-    collector_py_content = """def process_urls(urls):
-    xpath = ""
-    for url in urls:
-        page = "" # get_page_content_hash(url)        
-        if page["status_code"] == 200:
-            page = "" # get_parsed_tree(page)
-        else:
-            print(f"Failed to fetch the page for URL: {url}. Status code: {page['status_code']}")
+    collector_py_content = """from common_module import *
+import yaml
+
+def get_final_url(url, depth, current_depth_level):
+    page_url = []
+    try:
+        dom = get_page_content_hash(url)
+        if dom["status_code"] != 200:
+            raise Exception("No preper dom found")
+        dom = get_parsed_tree(dom)
+        xpath = ""
+        name = get_value_from_xpath(dom, xpath, "all")
+    except Exception as e:
+        print(f"Exception occurend: {e}")
+    return page_url
     """
     collector_yml_content = """depth0:
-  depth1:"""
+  seed_url: ["",""]
+  method_name: get_final_url
+depth1:
+  method_name: get_final_url"""
     
     fetcher_py_content = """def fetch_data():
     print("Fetching data...")
