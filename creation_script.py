@@ -10,8 +10,9 @@ def print_status(status, file_name, project, site_name, info):
         "site_name": site_name,
         "info": info
     }
-    status_message = json.dumps(status_message, indent=4)
-    print(status_message)
+    json_message = json.dumps(status_message, indent=4)
+    
+    print(json_message)
 
 def create_project_structure(base_path, project_name, site_name, py_content, yml_content):
     project_path = os.path.join(base_path, project_name)
