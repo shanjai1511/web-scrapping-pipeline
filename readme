@@ -1,1 +1,20 @@
+Old_scripts:
+Contains older versions of scripts that were likely used in earlier stages of development.
 
+url_collector:
+Likely contains scripts and tools for collecting URLs from various sources. These URLs may be the targets for web scraping.
+
+url_fetcher:
+Likely contains scripts for fetching data from the collected URLs. These scripts would handle the actual web scraping process.
+
+common_module.py:
+A Python module with common functions and utilities used across various scripts in the project. This might include functions for handling HTTP requests, parsing HTML, and other repetitive tasks.
+
+creation_script.py:
+A script used for creating necessary data structures, databases, or files required for the scraping pipeline.
+
+delete_files_automated.py:
+A script for automating the deletion of files, probably to clean up temporary data or manage storage space efficiently.
+
+Foldder_list.bat:
+A batch file (likely a typo for "Folder_list.bat") which might be used for listing or managing directories in a Windows environment.
