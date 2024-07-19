@@ -1,9 +1,11 @@
 import os
 import sys
+from common_module import *
+import pdb
 
 # Define the root directories and file locations
 base_dir = "C:/Users/shanj/OneDrive/Desktop/web-scrapping-pipeline"
-output_dir = os.path.join(base_dir, "scrape_output/collector_output/apple_aus")
+output_dir = ""
 
 def fetch_collector_output(project_name, site_name):
     """Fetch the URLs from the specified file and store them in an array."""
@@ -15,17 +17,18 @@ def fetch_collector_output(project_name, site_name):
         filepath = filepath.replace("\\","/")
         # Debugging: Print constructed file path
         print(f"Constructed file path: {filepath}")
+        pdb.set_trace()
         # Check if the file exists
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"File not found: {filepath}")
-
         # Read the contents of the file and store them in an array
         with open(filepath, 'r') as file:
             urls = [line.strip() for line in file.readlines()]
 
         # Print the contents
         for url in urls:
-            print(url)
+            data = get_page_content_hash(url)
+            print(data)
 
         # Print status message
         status_message = {
@@ -68,6 +71,6 @@ if __name__ == "__main__":
     
     project_name = sys.argv[1]
     site_name = sys.argv[2]
-
+    output_dir = os.path.join(base_dir, f"scrape_output/collector_output/{project_name}")
     urls = fetch_collector_output(project_name, site_name)
     # Optionally, you can do something with the urls array here

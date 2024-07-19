@@ -1,5 +1,3 @@
 depth0:
-  seed_url: ["https://www.jbhifi.co.nz/collections/mobile-phones?Phone%20Type=iPhone%2013&Phone%20Type=iPhone%2014%20Plus"]
-  method_name: get_final_url
-depth1:
+  seed_url: ["https://www.mouthshut.com/air-coolers-proid-925335"]
   method_name: get_final_url
