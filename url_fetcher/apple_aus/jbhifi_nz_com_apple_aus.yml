@@ -1,2 +1,3 @@
-depth0:
-depth1:
+request_type:
+verification_xpath:
+retry_attemp_per_url:
