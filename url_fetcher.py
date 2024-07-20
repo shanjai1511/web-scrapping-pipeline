@@ -63,7 +63,6 @@ class UrlFetcher(CommonModule):
             }
             print(status_message)
             return []
-
 if __name__ == "__main__":
     if len(sys.argv) != 3:
         print("Usage: python url_fetcher.py <project_name> <site_name>")
