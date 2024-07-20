@@ -68,7 +68,6 @@ if __name__ == "__main__":
     if len(sys.argv) != 3:
         print("Usage: python url_fetcher.py <project_name> <site_name>")
         sys.exit(1)
-    
     project_name = sys.argv[1]
     site_name = sys.argv[2]
     url_fetcher = UrlFetcher(base_dir)
