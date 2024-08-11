@@ -1,2 +1,0 @@
-create new branch - git checkout -b temp$(Get-Date -Format "yyyyMMddHHmmss")
-environment activate  - myenv\Scripts\activate
