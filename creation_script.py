@@ -1,5 +1,5 @@
 import os
-import pandas as pd
+import pandas as pd #type: ignore
 import sys
 import json
 def print_status(status, file_name, project, site_name, info):
@@ -78,23 +78,25 @@ def main():
     url_fetcher_path = os.path.join(base_dir, 'url_fetcher')
     url_extractor_path = os.path.join(base_dir, 'url_data_extractor')
     scrape_output_path = os.path.join(base_dir, 'scrape_output')
-    
+    class_name_in_site_script = f"{site_name}_{project_name}"
+    class_name_in_site_script = ''.join([word.capitalize() for word in class_name_in_site_script.split('_')])
     # Content for each file type
-    collector_py_content = """from common_module import *
-import yaml
+    collector_py_content = f"""from sdf_module import CommonModule
 
-def get_final_url(url, depth, current_depth_level):
-    page_url = []
-    try:
-        dom = get_page_content_hash(url)
-        if dom["status_code"] != 200:
-            raise Exception("No preper dom found")
-        dom = get_parsed_tree(dom)
-        xpath = ""
-        name = get_value_from_xpath(dom, xpath, "all")
-    except Exception as e:
-        print(f"Exception occurend: {e}")
-    return page_url
+class {class_name_in_site_script}(CommonModule):
+    def get_final_url(self, url, depth, current_depth_level):
+        page_url = []
+        try:
+            dom = self.get_page_content_hash(url)
+            if dom["status_code"] != 200:
+                raise Exception("No proper DOM found")
+            parsed_tree = self.get_parsed_tree(dom)
+            if parsed_tree is None:
+                raise Exception("Parsing failed")
+            page_url = self.get_value_from_xpath(parsed_tree, "xpath", "all/first")
+        except Exception as e:
+            print(f"Exception occurred: "+ e)
+        return page_url
     """
     collector_yml_content = """depth0:
   seed_url: ["",""]
@@ -102,11 +104,16 @@ def get_final_url(url, depth, current_depth_level):
 depth1:
   method_name: get_final_url"""
     
-    fetcher_py_content = """def fetch_data():
-    print("Fetching data...")
+    fetcher_py_content = f"""from sdf_module import *
+class {class_name_in_site_script}:
+    def get_page_content(self, url, args_hash):
+        page_content = CommonModule.get_page_content_hash(url, args_hash)
+        return page_content
 """
-    fetcher_yml_content = """depth0:
-  depth1:"""
+    fetcher_yml_content = """request_type:
+verification_xpath:
+ingnore_cache_for_retries:
+retry_attempt_per_url:"""
     
     extractor_py_content = """def extract_data():
     print("Extracting data...")
