@@ -1,15 +1,19 @@
 import os
+import glob
 import requests
 import hashlib
 from lxml import etree # type: ignore
 import json
 import sys
+import csv
+import ast
 import pdb
 import yaml
 import importlib.util
 from openpyxl import load_workbook # type: ignore
 from datetime import datetime
 import time
+from bs4 import BeautifulSoup
 
 class CommonModule:
     @staticmethod
@@ -57,7 +61,6 @@ class CommonModule:
                     CommonModule.print_info_message("success", output_file, "Page fetched successfully.")
                     return result
                 else:
-                    #CommonModule.print_error_message("error", url, f"Page fetch failed with status code {response.status_code}.")
                     return {
                         "page_doc": "",
                         "status_code": response.status_code,
@@ -66,52 +69,41 @@ class CommonModule:
                     }
 
             except requests.RequestException as e:
-                #CommonModule.print_error_message("error", url, f"Page fetch failed: {e}")
                 return {
                     "page_doc": "",
                     "status_code": None,
                     "url": url
                 }
         else:
-            #CommonModule.print_error_message("error", url, "No URL found")
             return {"page_doc": "", "status_code": None, "url": url}
 
     @staticmethod
     def get_parsed_tree(page_doc):
         try:
-            parser = etree.HTMLParser()
-            tree = etree.fromstring(page_doc["page_doc"], parser)
-            CommonModule.print_info_message("success","Page document parsed successfully.")
-            return tree
-        except etree.XMLSyntaxError as e:
-            CommonModule.print_error_message("error", f"XML Syntax Error: {e}")
-            return None
+            soup = BeautifulSoup(page_doc["page_doc"], 'html5lib')
+            CommonModule.print_info_message("success", "Page document parsed successfully.")
+            return soup
         except Exception as e:
-            CommonModule.print_error_message("error", f"Unexpected error: {e}")
+            CommonModule.print_error_message("error", f"Unexpected error during parsing: {e}")
             return None
-        
+
+    @staticmethod
+    def get_value_from_xpath(parsed_tree, xpath_expr, count):
+        try:
+            elements = parsed_tree.select(xpath_expr)
+            text_content = [element.get_text() for element in elements if element]
+            if count == "all":
+                return text_content
+            elif count == "first":
+                return text_content[0] if text_content else None
+        except Exception as e:
+            return f"Unexpected error: {e}"
+
     @staticmethod
     def encode(array):
         combined_str = ''.join(array)
         unique_id = hashlib.md5(combined_str.encode()).hexdigest()
         return unique_id
-    
-    @staticmethod
-    def get_value_from_xpath(parsed_tree, xpath_expr, count):
-        try:
-            elements = parsed_tree.xpath(xpath_expr)
-            text_content = [element for element in elements if element]
-            #CommonModule.print_error_message("success", "XPath evaluation", f"Text extracted successfully using XPath: {xpath_expr}")
-            if count == "all":
-                return text_content
-            elif count == "first":
-                return text_content[0] if text_content else None
-        except etree.XPathError as e:
-            #CommonModule.print_error_message("error", "XPath evaluation", f"XPath Error: {e}")
-            return f"XPath Error: {e}"
-        except Exception as e:
-            #CommonModule.print_error_message("error", "XPath evaluation", f"Unexpected error: {e}")
-            return f"Unexpected error: {e}"
 
 class UrlCollector(CommonModule):
     def __init__(self, base_dir, project_name, site_name):
@@ -292,6 +284,70 @@ class UrlFetcher(CommonModule):
             print(status_message)
             return []        
 
+
+class UrlExtractor(CommonModule):
+    def __init__(self, base_dir, project_name, site_name):
+        self.base_dir = base_dir
+        self.output_dir = ""
+        self.extractor_dir = f"{base_dir}/url_data_extractor"
+        self.project_name = project_name
+        self.site_name = site_name
+        self.count = 0
+
+    @staticmethod
+    def main(self):
+        try:
+            yaml_file_path = os.path.join(self.extractor_dir, f"{self.project_name}/{self.site_name}_{self.project_name}.yml")
+            #CommonModule.print_info_message("info", f"Loading configuration file: {yaml_file_path}")
+            with open(yaml_file_path, 'r') as file:
+                depth = yaml.safe_load(file)
+
+            module_path = os.path.join(self.extractor_dir, f"{self.project_name}/{self.site_name}_{self.project_name}.py")
+
+            class_name_in_site_script = f"{self.site_name}_{self.project_name}"
+            class_name_in_site_script = ''.join([word.capitalize() for word in class_name_in_site_script.split('_')])
+            try:
+                spec = importlib.util.spec_from_file_location(class_name_in_site_script, module_path)
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                SiteClass = getattr(module, class_name_in_site_script)
+                site_instance = SiteClass()
+                fetcher_output = f"C:/Users/shanj/OneDrive/Desktop/web-scrapping-pipeline/scrape_output/fetcher_output/{project_name}/{site_name}_{project_name}"
+                file_paths = glob.glob(os.path.join(fetcher_output, "*"))
+                data = []
+                fields_name = []
+                for output in file_paths:
+                    page_content = ""
+                    with open(output, 'r') as file:
+                        page_content = file.read()
+                    page_content = ast.literal_eval(page_content)
+                    parsed_content = CommonModule.get_parsed_tree(page_content)
+                    fields = depth['fields'] 
+                    record = {}
+                    fields_name = []
+                    for field in fields:
+                        field_name = field
+                        fields_name.append(field_name)
+                        hash = fields[field]
+                        hash['url'] = page_content['url']
+                        method_name = f"get_{field_name}"
+                        method_to_call = getattr(site_instance, method_name)
+                        result = method_to_call(parsed_content,hash)
+                        record[field_name] = result
+                    data.append(record)
+                output_file = f"C:/Users/shanj/OneDrive/Desktop/web-scrapping-pipeline/scrape_output/extractor_output/{project_name}/{site_name}_{project_name}.csv"
+                with open(output_file, mode='w', newline='', encoding='utf-8') as file:
+                    writer = csv.DictWriter(file, fields_name)
+                    writer.writeheader()
+                    writer.writerows(data)
+            except Exception as e:
+                CommonModule.print_error_message("error", f"Error importing module from {module_path}: {e}")
+                return
+
+        except Exception as e:
+            CommonModule.print_error_message("error", f"Unhandled error during execution: {e}")
+            raise
+
 if __name__ == "__main__":
     if len(sys.argv) != 4:
         pdb.set_trace()
@@ -308,6 +364,5 @@ if __name__ == "__main__":
         url_fetcher = UrlFetcher(base_dir,project_name,site_name)
         url_fetcher.fetch_collector_output(project_name, site_name)
     elif method_to_execute == "url_extractor":
-        #url_extractor = UrlExtractor(base_dir,project_name,site_name)
-        #url_extractor.main(url_extractor)
-        print()
+        url_extractor = UrlExtractor(base_dir,project_name,site_name)
+        url_extractor.main(url_extractor)
