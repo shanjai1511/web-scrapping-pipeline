@@ -10,7 +10,7 @@ class JbhifiNzComAppleAus(CommonModule):
             parsed_tree = self.get_parsed_tree(dom)
             if parsed_tree is None:
                 raise Exception("Parsing failed")
-            page_url = self.get_value_from_xpath(parsed_tree, "//div[@class='listing-prod-title']/a[@class='text-truncate']/@href", "all")
+            page_url = self.get_value_from_xpath(parsed_tree, "div[class*='listing-prod-title'] a[class*='text-truncate']", "all", "href")
         except Exception as e:
             print(f"Exception occurred: {e}")
         return page_url
