@@ -7,7 +7,7 @@ class JbhifiNzComAppleAus():
 
     @staticmethod
     def get_page_url(page_doc, inhash):
-        return "https://www.jbhifi.com.au/apple"
+        return inhash['url']
 
     @staticmethod
     def get_product_name(page_doc, inhash):
