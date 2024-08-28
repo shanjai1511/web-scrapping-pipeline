@@ -26,3 +26,6 @@ Potential Use Cases
   Market Research: Continuously scrape product data from e-commerce websites to monitor prices and availability.
   Content Aggregation: Collect articles, blog posts, or news from various websites for a content aggregator platform.
   Data Mining: Extract and process data from forums, social media, or review sites for sentiment analysis and trend tracking.
+
+create new branch - git checkout -b temp$(Get-Date -Format "yyyyMMddHHmmss")
+environment activate  - myenv\Scripts\activate
