@@ -71,10 +71,9 @@ class CommonModule:
                     return result
                 else:
                     return {
-                        "page_doc": "",
+                        "page_doc": response.text,
                         "status_code": response.status_code,
-                        "url": url,
-                        "file_path": output_file
+                        "url": url
                     }
 
             except requests.RequestException as e:
@@ -110,8 +109,6 @@ class CommonModule:
                 return text_content
             elif count == "first":
                 return text_content[0] if text_content else None
-            elif count == "last":
-                return text_content[-1]
         except Exception as e:
             logging.exception("XPath extraction failed")
             return f"Unexpected error: {e}"
@@ -273,17 +270,17 @@ class UrlFetcher(CommonModule):
         extended_header = yaml_content.get("request_params", {}).get("extended_header",{})
         urls = self.fetch_collector_output(self.project_name, self.site_name)
 
-        output_dir = os.path.join(self.base_dir, f"scrape_output/fetcher_output/{self.project_name}/{self.site_name}_{self.project_name}/{datetime.now().strftime('%d%m%Y')}/")
+        output_dir = os.path.join(self.base_dir, f"scrape_output/fetcher_output/{self.project_name}")
         os.makedirs(output_dir, exist_ok=True)
         for url in urls:
             if extended_header:
                 result = self.get_page_content_hash(url, extended_header)
             else:
                 result = self.get_page_content_hash(url)
-            output_file = os.path.join(output_dir, f"{self.encode(url)}")
+            output_file = os.path.join(output_dir, f"{self.encode(url)}.html")
             if result["status_code"] == 200:
-                with open(output_file, "w") as f:
-                    f.write(str(result))
+                with open(output_file, "wb") as f:
+                    f.write(result["page_doc"].encode("utf-8"))
                 CommonModule.print_info_message("success", f"Successfully fetched page content for URL: {url}")
             else:
                 CommonModule.print_error_message("error", f"Failed to fetch page content for URL: {url}")
@@ -315,7 +312,7 @@ class UrlExtractor(CommonModule):
                 spec.loader.exec_module(module)
                 SiteClass = getattr(module, class_name_in_site_script)
                 site_instance = SiteClass()
-                fetcher_output = f"C:/Users/shanj/OneDrive/Desktop/web-scrapping-pipeline/scrape_output/fetcher_output/{project_name}/{site_name}_{project_name}/{datetime.now().strftime("%d%m%Y")}/"
+                fetcher_output = f"C:/Users/shanj/OneDrive/Desktop/web-scrapping-pipeline/scrape_output/fetcher_output/{project_name}/{site_name}_{project_name}"
                 file_paths = glob.glob(os.path.join(fetcher_output, "*"))
                 data = []
                 fields_name = []
