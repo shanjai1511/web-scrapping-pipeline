@@ -87,7 +87,9 @@ class CommonModule:
     @staticmethod
     def get_parsed_tree(page_doc):
         try:
-            soup = BeautifulSoup(page_doc["page_doc"], 'html5lib')
+            if type(page_doc) == dict:
+                page_doc = page_doc["page_doc"]
+            soup = BeautifulSoup(page_doc, 'html5lib')
             CommonModule.print_info_message("success", "Page document parsed successfully.")
             return soup
         except Exception as e:
@@ -214,7 +216,7 @@ class UrlCollector:
                 seed_url = [seed_url]
 
             self.get_final_url(seed_url, depth, 0, len(depth) - 1, site_instance)
-            self.enter_count_in_sheet()
+            #self.enter_count_in_sheet()
 
         except Exception as e:
             CommonModule.print_error_message("error", f"Unhandled error during execution: {e}")
@@ -223,7 +225,7 @@ class UrlCollector:
 
     def main(self):
         CommonModule.print_info_message("info", f"Starting script execution of url_collector for {self.site_name}_{self.project_name}")
-        self.output_dir = Path(self.base_dir) / f"scrape_output /collector_output/{self.project_name}"
+        self.output_dir = Path(self.base_dir) / f"scrape_output/collector_output/{self.project_name}"
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.collector_dir = Path(self.base_dir) / f"url_collector/{self.project_name}"
         filepath = self.output_dir / f"{self.site_name}_{self.project_name}.txt"
