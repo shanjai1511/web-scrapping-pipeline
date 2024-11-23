@@ -115,11 +115,241 @@ verification_xpath:
 ingnore_cache_for_retries:
 retry_attempt_per_url:"""
     
-    extractor_py_content = """def extract_data():
-    print("Extracting data...")
+    extractor_py_content = f"""from sdf_module import CommonModule
+from lxml import html #type: ignore
+import json
+class {class_name_in_site_script}:
+     @staticmethod
+    def modify_page_doc(inhash, page_doc):
+        final_data = []
+        try:
+            url,category = str(inhash).split("|")
+        except Exception as e:
+            print(f"Exception occurred: " + e)
+        return final_data
+
+    @staticmethod
+    def get_crawl_timestamp(page_doc, inhash):
+        return CommonModule.get_current_timestamp()
+
+    @staticmethod
+    def get_uniq_id(page_doc, inhash):
+        return CommonModule.encode(inhash['url'])
+
+    @staticmethod
+    def get_page_url(page_doc, inhash):
+        value = page_doc.xpath("xpath")
+        return value if value else None
+
+    @staticmethod
+    def get_product_name(page_doc, inhash):
+        value = page_doc.xpath("xpath")
+        return value if value else None
+
+    @staticmethod
+    def get_price(page_doc, inhash):
+        value = page_doc.xpath("xpath")
+        return value if value else None
+    
+    @staticmethod
+    def get_size(page_doc, inhash):
+        value = page_doc.xpath("xpath")
+        return value if value else None
+    
+    @staticmethod
+    def get_colour(page_doc, inhash):
+        value = page_doc.xpath("xpath")
+        return value if value else None
+    
+    @staticmethod
+    def get_description(page_doc, inhash):
+        value = page_doc.xpath("xpath")
+        return value if value else None
+    
+    @staticmethod
+    def get_sku(page_doc, inhash):
+        value = page_doc.xpath("xpath")
+        return value if value else None
+    
+    @staticmethod
+    def get_fit(page_doc, inhash):
+        value = page_doc.xpath("xpath")
+        return value if value else None
+    
+    @staticmethod
+    def get_origin(page_doc, inhash):
+        value = page_doc.xpath("xpath")
+        return value if value else None
+    
+    @staticmethod
+    def get_manufacturer(page_doc, inhash):
+        value = page_doc.xpath("xpath")
+        return value if value else None
+    
+    @staticmethod
+    def get_is_parent(page_doc, inhash):
+        value = page_doc.xpath("xpath")
+        return value if value else None
+    
+    @staticmethod
+    def get_stock_status(page_doc, inhash):
+        value = page_doc.xpath("xpath")
+        return value if value else None
+    
+    @staticmethod
+    def get_variant_id(page_doc, inhash):
+        value = page_doc.xpath("xpath")
+        return value if value else None
+    
+    @staticmethod
+    def get_primary_category(page_doc, inhash):
+        value = page_doc.xpath("xpath")
+        return value if value else None
+    
+    @staticmethod
+    def get_primary_category_url(page_doc, inhash):
+        value = page_doc.xpath("xpath")
+        return value if value else None
+    
+    @staticmethod
+    def get_secondary_category(page_doc, inhash):
+        value = page_doc.xpath("xpath")
+        return value if value else None
+    
+    @staticmethod
+    def get_secondary_category_url(page_doc, inhash):
+        value = page_doc.xpath("xpath")
+        return value if value else None
+    
+    @staticmethod
+    def get_tertiary_category(page_doc, inhash):
+        value = page_doc.xpath("xpath")
+        return value if value else None
+    
+    @staticmethod
+    def get_tertiary_category_url(page_doc, inhash):
+        value = page_doc.xpath("xpath")
+        return value if value else None
+    
+    @staticmethod
+    def get_product_rank(page_doc, inhash):
+        value = page_doc.xpath("xpath")
+        return value if value else None
 """
-    extractor_yml_content = """depth0:
-  depth1:"""
+    extractor_yml_content = """---
+domain: jbhifi.nz.com
+fields:
+  crawl_timestamp:
+    desc_of_xpath:
+    standard_nodeset_range: first
+    standard_nodeset_join_char: "|"
+    standard_post_processing_functions: "remove_line_and_spaces"
+  uniq_id:
+    desc_of_xpath:
+    standard_nodeset_range: first
+    standard_nodeset_join_char: "|"
+    standard_post_processing_functions: "remove_line_and_spaces"
+  page_url:
+    desc_of_xpath:
+    standard_nodeset_range: first
+    standard_nodeset_join_char: "|"
+    standard_post_processing_functions: "remove_line_and_spaces"
+  product_name:
+    desc_of_xpath:
+    standard_nodeset_range: first
+    standard_nodeset_join_char: "|"
+    standard_post_processing_functions: "remove_line_and_spaces"
+  price:
+    desc_of_xpath:
+    standard_nodeset_range: first
+    standard_nodeset_join_char: "|"
+    standard_post_processing_functions: "remove_line_and_spaces"
+  size:
+    desc_of_xpath:
+    standard_nodeset_range: first
+    standard_nodeset_join_char: "|"
+    standard_post_processing_functions: "remove_line_and_spaces"
+  colour:
+    desc_of_xpath:
+    standard_nodeset_range: first
+    standard_nodeset_join_char: "|"
+    standard_post_processing_functions: "remove_line_and_spaces"
+  description:
+    desc_of_xpath:
+    standard_nodeset_range: first
+    standard_nodeset_join_char: "|"
+    standard_post_processing_functions: "remove_line_and_spaces"
+  sku:
+    desc_of_xpath:
+    standard_nodeset_range: first
+    standard_nodeset_join_char: "|"
+    standard_post_processing_functions: "remove_line_and_spaces"
+  fit:
+    desc_of_xpath:
+    standard_nodeset_range: first
+    standard_nodeset_join_char: "|"
+    standard_post_processing_functions: "remove_line_and_spaces"
+  origin:
+    desc_of_xpath:
+    standard_nodeset_range: first
+    standard_nodeset_join_char: "|"
+    standard_post_processing_functions: "remove_line_and_spaces"
+  manufacturer:
+    desc_of_xpath:
+    standard_nodeset_range: first
+    standard_nodeset_join_char: "|"
+    standard_post_processing_functions: "remove_line_and_spaces"
+  is_parent:
+    desc_of_xpath:
+    standard_nodeset_range: first
+    standard_nodeset_join_char: "|"
+    standard_post_processing_functions: "remove_line_and_spaces"
+  stock_status:
+    desc_of_xpath:
+    standard_nodeset_range: first
+    standard_nodeset_join_char: "|"
+    standard_post_processing_functions: "remove_line_and_spaces"
+  variant_id:
+    desc_of_xpath:
+    standard_nodeset_range: first
+    standard_nodeset_join_char: "|"
+    standard_post_processing_functions: "remove_line_and_spaces"
+  primary_category:
+    desc_of_xpath:
+    standard_nodeset_range: first
+    standard_nodeset_join_char: "|"
+    standard_post_processing_functions: "remove_line_and_spaces"
+  primary_category_url:
+    desc_of_xpath:
+    standard_nodeset_range: first
+    standard_nodeset_join_char: "|"
+    standard_post_processing_functions: "remove_line_and_spaces"
+  secondary_category:
+    desc_of_xpath:
+    standard_nodeset_range: first
+    standard_nodeset_join_char: "|"
+    standard_post_processing_functions: "remove_line_and_spaces"
+  secondary_category_url:
+    desc_of_xpath:
+    standard_nodeset_range: first
+    standard_nodeset_join_char: "|"
+    standard_post_processing_functions: "remove_line_and_spaces"
+  tertiary_category:
+    desc_of_xpath:
+    standard_nodeset_range: first
+    standard_nodeset_join_char: "|"
+    standard_post_processing_functions: "remove_line_and_spaces"
+  tertiary_category_url:
+    desc_of_xpath:
+    standard_nodeset_range: first
+    standard_nodeset_join_char: "|"
+    standard_post_processing_functions: "remove_line_and_spaces"
+  product_rank:
+    desc_of_xpath:
+    standard_nodeset_range: first
+    standard_nodeset_join_char: "|"
+    standard_post_processing_functions: "remove_line_and_spaces"
+"""
     
     create_project_structure(url_collector_path, project_name, site_name, collector_py_content, collector_yml_content)
     create_project_structure(url_fetcher_path, project_name, site_name, fetcher_py_content, fetcher_yml_content)

@@ -15,6 +15,7 @@ import time
 from bs4 import BeautifulSoup
 from pathlib import Path
 from datetime import date
+from lxml import etree #type: ignore
 
 # Configure logging
 logging.basicConfig(
@@ -177,7 +178,7 @@ class UrlCollector:
         method_to_call = getattr(module_instance, method_name)
         if method_to_call is None:
             return
-
+        
         for i in url:
             try:
                 result_url = method_to_call(i, depth, current_depth_level)
@@ -213,8 +214,6 @@ class UrlCollector:
                 return
 
             seed_url = depth["depth0"]["seed_url"]
-            if not isinstance(seed_url, list):
-                seed_url = [seed_url]
 
             self.get_final_url(seed_url, depth, 0, len(depth) - 1, site_instance)
             #self.enter_count_in_sheet()
@@ -279,9 +278,8 @@ class UrlFetcher:
             else:
                 result = CommonModule.get_page_content_hash(url)
             data["url"] = key
-            inhash_list.append(data)
-            output_file = output_dir / f"{formatted_date}{CommonModule.encode(url)}.html"
-            data["output_file"] = output_file
+            output_file = output_dir / f"{formatted_date}{CommonModule.encode(key)}.html"
+            data["output_file"] = str(output_file)
             inhash_list.append(data)
             if result["status_code"] == 200:
                 with open(output_file, "wb") as f:
@@ -300,21 +298,51 @@ class UrlFetcher:
 class UrlExtractor:
     def __init__(self, base_dir, project_name, site_name):
         self.base_dir = base_dir
-        self.output_dir = ""
-        self.extractor_dir = Path(base_dir) / "url_data_extractor"
         self.project_name = project_name
         self.site_name = site_name
+        self.extractor_dir = Path(base_dir) / "url_data_extractor"
         self.count = 0
+
+    def extract_records(self, output, page_doc, config, site_instance):
+        """
+        Modify and extract multiple records from the page_doc using site-specific methods.
+        Args:
+            page_doc: Parsed document for the fetched page.
+            config: Field extraction rules from the YAML configuration.
+            site_instance: Instance of the site-specific class.
+        Returns:
+            List of extracted records.
+        """
+        # Use the site-specific method to modify the page_doc
+        subsections = site_instance.modify_page_doc(output, page_doc)
+        
+        records = []
+        for sub_doc in subsections:
+            record = {}
+            for field, rules in config['fields'].items():
+                method_name = f"get_{field}"
+                if hasattr(site_instance, method_name):
+                    extraction_method = getattr(site_instance, method_name)
+                    try:
+                        # Call the respective extraction method with the sub_doc and field rules
+                        record[field] = extraction_method(sub_doc, {**rules, 'url': config.get('domain', '')})
+                    except Exception as e:
+                        record[field] = None
+                        logging.warning(f"Error extracting field {field}: {e}")
+                else:
+                    logging.warning(f"Method {method_name} not implemented for field {field}.")
+            records.append(record)
+        return records
 
     def main(self):
         try:
             yaml_file_path = self.extractor_dir / f"{self.project_name}/{self.site_name}_{self.project_name}.yml"
             CommonModule.print_info_message("info", f"Loading configuration file: {yaml_file_path}")
+            
             with open(yaml_file_path, 'r') as file:
-                depth = yaml.safe_load(file)
+                config = yaml.safe_load(file)  # Load the configuration from the YAML file
 
             module_path = self.extractor_dir / f"{self.project_name}/{self.site_name}_{self.project_name}.py"
-
             class_name_in_site_script = f"{self.site_name}_{self.project_name}"
             class_name_in_site_script = ''.join([word.capitalize() for word in class_name_in_site_script.split('_')])
             try:
@@ -327,34 +355,31 @@ class UrlExtractor:
                 CommonModule.print_error_message("error", f"Error importing module from {module_path}: {e}")
                 return
 
-            fetcher_output = self.extractor_dir / f"{self.project_name}/{self.site_name}_{self.project_name}"
-            file_paths = glob.glob(str(fetcher_output / "*"))
-            data = []
-            fields_name = []
+            # Fetching file paths (where URLs are stored)
+            today = date.today()
+            formatted_date = today.strftime('%Y%m%d')
+            output_queue = Path(self.base_dir) / f"scrape_output/fetcher_output/{self.project_name}/{formatted_date}/{self.site_name}_{self.project_name}.txt"
+            with open(output_queue, 'r') as file:
+                # Read all lines and strip any leading/trailing whitespaces
+                file_paths = [line.strip() for line in file.readlines()]
+            # Extract records for each file
             for output in file_paths:
-                page_content = ""
-                with open(output, 'r') as file:
+                output_key = eval(output)
+                output = output_key.get("output_file")
+                with open(output, 'r', encoding='utf-8') as file:
                     page_content = file.read()
-                page_content = ast.literal_eval(page_content)
-                parsed_content = CommonModule.get_parsed_tree(page_content)
-                fields = depth['fields'] 
-                record = {}
-                fields_name = []
-                for field in fields:
-                    field_name = field
-                    fields_name.append(field_name)
-                    hash = fields[field]
-                    hash['url'] = page_content['url']
-                    method_name = f"get_{field_name}"
-                    method_to_call = getattr(site_instance, method_name)
-                    result = method_to_call(parsed_content,hash)
-                    record[field_name] = result
-                data.append(record)
-            output_file = self.extractor_dir / f"{self.project_name}/{self.site_name}_{self.project_name}_{datetime.now().strftime('%d%m%Y')}.csv"
-            with open(output_file, mode='w', newline='', encoding='utf-8') as file:
-                writer = csv.DictWriter(file, fields_name)
-                writer.writeheader()
-                writer.writerows(data)
+                page_doc = etree.HTML(page_content)
+                extracted_data = self.extract_records(output_key.get("url"),  page_doc, config, site_instance)
+                # Write extracted data to CSV
+                output_file = Path(self.base_dir) / f"scrape_output/extractor_output/{self.project_name}/{formatted_date}"
+                output_file.mkdir(parents=True, exist_ok=True)
+                output_file = output_file / f"{self.site_name}_{self.project_name}.csv"
+                
+                with open(output_file, mode='a', newline='', encoding='utf-8') as file:
+                    writer = csv.DictWriter(file, fieldnames=config['fields'].keys())
+                    if file.tell() == 0:
+                        writer.writeheader()
+                    writer.writerows(extracted_data)
 
         except Exception as e:
             CommonModule.print_error_message("error", f"Unhandled error during execution: {e}")

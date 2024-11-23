@@ -57,10 +57,10 @@ class StyleunionComInternalFeasibility(CommonModule):
             print(f"Exception occurred: {e}")
         return page_url
     
-    def  get_pagination_url(self, url, depth, current_depth_level):
+    def  get_pagination_url(self, keyurl, depth, current_depth_level):
         pagination_url = []
         try:
-            url, category = url.split("|")
+            url, category = keyurl.split("|")
             dom = self.get_page_content_hash(url)
             if dom["status_code"] != 200:
                 raise Exception("No proper DOM found")
@@ -73,9 +73,9 @@ class StyleunionComInternalFeasibility(CommonModule):
             product_count = math.ceil(int(product_count)/12)
             if product_count > 1:
                 for page in range(1,product_count):
-                    pagination_url.append(f"{url}?page#{page}|{category}")
+                    pagination_url.append(f"{url}?page={page}|{category}")
             else:
-                return [url]
+                return [keyurl]
         except Exception as e:
             print(f"Exception occurred: {e}")
         return pagination_url
@@ -84,7 +84,7 @@ class StyleunionComInternalFeasibility(CommonModule):
         product_url = []
         try:
             url, category = url.split("|")
-            url = "https://styleunion.in/collections/new-in?sort_by=best-selling&filter.v.price.gte=&filter.v.price.lte="
+            url = url.replace("-page","")
             dom = self.get_page_content_hash(url)
             if dom["status_code"] != 200:
                 raise Exception("No proper DOM found")
