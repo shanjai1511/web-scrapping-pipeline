@@ -261,39 +261,38 @@ class UrlFetcher:
         with open(yaml_file_path, 'r') as file:
             yaml_content = yaml.safe_load(file)
 
-        inhash_list = []
-        extended_header = yaml_content.get("request_params", {}).get("extended_header",{})
+        extended_header = yaml_content.get("request_params", {}).get("extended_header", {})
         urls = self.fetch_collector_output()
         today = date.today()
         formatted_date = today.strftime('%Y%m%d')
         output_dir = Path(self.base_dir) / f"scrape_output/fetcher_output/{self.project_name}/{formatted_date}/{self.site_name}_{self.project_name}"
         output_dir.mkdir(parents=True, exist_ok=True)
-        for key in urls:
-            if not key:
-                next
-            url = key.split("|")[0]
-            data = {}
-            if extended_header:
-                result = CommonModule.get_page_content_hash(url, extended_header)
-            else:
-                result = CommonModule.get_page_content_hash(url)
-            data["url"] = key
-            output_file = output_dir / f"{formatted_date}{CommonModule.encode(key)}.html"
-            data["output_file"] = str(output_file)
-            inhash_list.append(data)
-            if result["status_code"] == 200:
-                with open(output_file, "wb") as f:
-                    f.write(result["page_doc"].encode("utf-8"))
-                CommonModule.print_info_message("success", f"Successfully fetched page content for URL: {url}")
-            else:
-                CommonModule.print_error_message("error", f"Failed to fetch page content for URL: {url}")
+
         output_queue = Path(self.base_dir) / f"scrape_output/fetcher_output/{self.project_name}/{formatted_date}/{self.site_name}_{self.project_name}.txt"
-        with open(output_queue, "w") as file:
-            for index, item in enumerate(inhash_list):
-                if index < len(inhash_list) - 1:  # Not the last item
-                    file.write(str(item) + "\n")
-                else:  # Last item
-                    file.write(str(item))
+        
+        with open(output_queue, "a") as file:  # Open in append mode
+            for key in urls:
+                if not key:
+                    continue
+                url = key.split("|")[0]
+                data = {}
+                if extended_header:
+                    result = CommonModule.get_page_content_hash(url, extended_header)
+                else:
+                    result = CommonModule.get_page_content_hash(url)
+                data["url"] = key
+                output_file = output_dir / f"{formatted_date}{CommonModule.encode(key)}.html"
+                data["output_file"] = str(output_file)
+                
+                if result["status_code"] == 200:
+                    with open(output_file, "wb") as f:
+                        f.write(result["page_doc"].encode("utf-8"))
+                    CommonModule.print_info_message("success", f"Successfully fetched page content for URL: {url}")
+                else:
+                    CommonModule.print_error_message("error", f"Failed to fetch page content for URL: {url}")
+                
+                # Write the data to the file immediately
+                file.write(str(data) + "\n")
 
 class UrlExtractor:
     def __init__(self, base_dir, project_name, site_name):
