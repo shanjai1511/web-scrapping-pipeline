@@ -2,6 +2,7 @@ from sdf_module import CommonModule
 from lxml import html #type: ignore
 import json
 import datetime
+import traceback
 
 class StyleunionComInternalFeasibility:
 
@@ -37,7 +38,9 @@ class StyleunionComInternalFeasibility:
 
             reviews_count = page_doc.xpath("//span[contains(@class,'badge__text')]")
             reviews_count = reviews_count[0].text.strip().split(" ")[0]
-            data["reviews_count"] = int(reviews_count)
+            data["reviews_count"] = 0
+            if reviews_count and not reviews_count == 'No':
+                data["reviews_count"] = int(reviews_count)
 
             origin = page_doc.xpath("//span[contains(@class,'metafield-multi_line_text_field')]")
             origin = origin[0].text
@@ -75,9 +78,12 @@ class StyleunionComInternalFeasibility:
                 variant_data["list_price"] = node.get("price")/100
                 variant_data["selling_price"] = node.get("price")/100
                 discount_percentage = ((variant_data["list_price"] - variant_data["selling_price"])/variant_data["list_price"]) * 100
+                
                 variant_data["discount_percentage"] = int(discount_percentage)
                 final_data.append(variant_data)
         except Exception as e:
+            import pdb; pdb.set_trace()
+            traceback.format_exc()
             print(f"Exception occurred: {e}")
         return final_data
 
