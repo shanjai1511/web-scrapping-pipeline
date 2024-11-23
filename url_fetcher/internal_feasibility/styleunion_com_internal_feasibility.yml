@@ -1,4 +1,1 @@
-request_type:
-verification_xpath:
-ingnore_cache_for_retries:
-retry_attempt_per_url:
+request_type: curl
