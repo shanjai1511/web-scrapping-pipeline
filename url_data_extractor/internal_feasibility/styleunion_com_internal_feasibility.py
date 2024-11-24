@@ -1,8 +1,9 @@
 from sdf_module import CommonModule
 from lxml import html #type: ignore
 import json
-import datetime
+from datetime import datetime
 import traceback
+import pytz #type: ignore
 
 class StyleunionComInternalFeasibility:
 
@@ -82,16 +83,14 @@ class StyleunionComInternalFeasibility:
                 variant_data["discount_percentage"] = int(discount_percentage)
                 final_data.append(variant_data)
         except Exception as e:
-            import pdb; pdb.set_trace()
-            traceback.format_exc()
             print(f"Exception occurred: {e}")
         return final_data
 
     @staticmethod
     def get_crawl_timestamp(page_doc, inhash):
-        current_datetime = datetime.datetime.now()
-        timestamp = current_datetime.timestamp()
-        return timestamp
+        current_time = datetime.now(pytz.timezone('Asia/Kolkata'))
+        formatted_date = current_time.strftime("%B %d, %Y %I:%M:%S %p GMT%z")
+        return formatted_date
 
     @staticmethod
     def get_uniq_id(page_doc, inhash):

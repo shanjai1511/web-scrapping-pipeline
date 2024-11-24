@@ -16,6 +16,8 @@ from bs4 import BeautifulSoup
 from pathlib import Path
 from datetime import date
 from lxml import etree #type: ignore
+from proxy_config import *
+import random
 
 # Configure logging
 logging.basicConfig(
@@ -50,10 +52,24 @@ class CommonModule:
         logging.info(json_message)
 
     @staticmethod
-    def get_page_content_hash(url, extended_header=None):
+    def get_page_content_hash(url, proxy=None, extended_header=None):
         if url:
             try:
-                response = requests.get(url, headers=extended_header, verify=False) if extended_header else requests.get(url, verify=False)
+                # Prepare the proxies dictionary if Webshare proxy credentials are provided
+                proxies = None
+                proxy = "webshare_proxy"
+                if proxy == "webshare_proxy":
+                    host, port, username, password = random.choice(webshare_proxy)
+                    proxy_url = f"http://{username}:{password}@{host}:{port}"
+                    proxies = {"http": proxy_url, "https": proxy_url}
+
+                # Make the request with headers and proxies
+                response = requests.get(
+                    url,
+                    headers=extended_header,
+                    verify=False,
+                    proxies=proxies
+                )
 
                 if response.status_code == 200:
                     result = {
