@@ -18,6 +18,10 @@ from datetime import date
 from lxml import etree #type: ignore
 from proxy_config import *
 import random
+from lxml import html #type: ignore
+import json
+import math
+import pdb
 
 # Configure logging
 logging.basicConfig(
@@ -55,21 +59,26 @@ class CommonModule:
     def get_page_content_hash(url, proxy=None, extended_header=None):
         if url:
             try:
+                CommonModule.print_info_message("info", f"Fetching page content for URL: {url}")
                 # Prepare the proxies dictionary if Webshare proxy credentials are provided
-                proxies = None
-                proxy = "webshare_proxy"
                 if proxy == "webshare_proxy":
                     host, port, username, password = random.choice(webshare_proxy)
                     proxy_url = f"http://{username}:{password}@{host}:{port}"
                     proxies = {"http": proxy_url, "https": proxy_url}
 
-                # Make the request with headers and proxies
-                response = requests.get(
-                    url,
-                    headers=extended_header,
-                    verify=False,
-                    proxies=proxies
-                )
+                    # Make the request with headers and proxies
+                    response = requests.get(
+                        url,
+                        headers=extended_header,
+                        verify=False,
+                        proxies=proxies
+                    )
+                else:
+                    response = requests.get(
+                        url,
+                        headers=extended_header,
+                        verify=False
+                    )
 
                 if response.status_code == 200:
                     result = {
@@ -86,6 +95,7 @@ class CommonModule:
                     CommonModule.print_info_message("success", str(output_file), "Page fetched successfully.")
                     return result
                 else:
+                    CommonModule.print_error_message("error", f"Failed to fetch page content for URL: {url}")
                     return {
                         "page_doc": response.text,
                         "status_code": response.status_code,
@@ -93,6 +103,7 @@ class CommonModule:
                     }
 
             except requests.RequestException as e:
+                CommonModule.print_error_message("error", f"Request failed for URL: {url} with error: {e}")
                 logging.exception("Request failed")
                 return {
                     "page_doc": "",
@@ -100,16 +111,23 @@ class CommonModule:
                     "url": url
                 }
         else:
+            CommonModule.print_error_message("error", "Invalid URL")
             return {"page_doc": "", "status_code": None, "url": url}
 
     @staticmethod
-    def get_parsed_tree(page_doc):
+    def get_parsed_tree(page_doc, format="lxml"):
         try:
-            if type(page_doc) == dict:
-                page_doc = page_doc["page_doc"]
-            soup = BeautifulSoup(page_doc, 'html5lib')
-            CommonModule.print_info_message("success", "Page document parsed successfully.")
-            return soup
+            CommonModule.print_info_message("info", f"Parsing page document using {format}")
+            if format == "lxml":
+                parsed_tree = html.fromstring(page_doc["page_doc"])
+                CommonModule.print_info_message("success", "Page document parsed successfully using lxml.")
+                return parsed_tree
+            else:
+                if type(page_doc) == dict:
+                    page_doc = page_doc["page_doc"]
+                soup = BeautifulSoup(page_doc, 'html5lib')
+                CommonModule.print_info_message("success", "Page document parsed successfully using beautiful soup.")
+                return soup
         except Exception as e:
             CommonModule.print_error_message("error", f"Unexpected error during parsing: {e}")
             logging.exception("Parsing failed")
@@ -118,35 +136,44 @@ class CommonModule:
     @staticmethod
     def get_value_from_xpath(parsed_tree, xpath_expr, count, attr="none"):
         try:
+            CommonModule.print_info_message("info", f"Extracting value from XPath expression: {xpath_expr}")
             elements = parsed_tree.select(xpath_expr)
             text_content = [element.get_text() for element in elements if element]
             if attr != "none":
                 text_content = [link[attr] for link in elements if link.has_attr(attr)]
+            CommonModule.print_info_message("success", f"Value extracted from XPath expression: {xpath_expr}")
             return text_content if count == "all" else (text_content[0] if text_content else None)
         except Exception as e:
+            CommonModule.print_error_message("error", f"XPath extraction failed with error: {e}")
             logging.exception("XPath extraction failed")
             return f"Unexpected error: {e}"
 
     @staticmethod
     def get_value_from_css_selector(parsed_tree, css_selector, count, attr="none"):
         try:
+            CommonModule.print_info_message("info", f"Extracting value from CSS selector: {css_selector}")
             elements = parsed_tree.select(css_selector)
             text_content = [element.get_text() for element in elements if element]
             if attr != "none":
                 text_content = [element.get(attr) for element in elements if element.has_attr(attr)]
+            CommonModule.print_info_message("success", f"Value extracted from CSS selector: {css_selector}")
             return text_content if count == "all" else (text_content[0] if text_content else None)
         except Exception as e:
+            CommonModule.print_error_message("error", f"CSS selector extraction failed with error: {e}")
             logging.exception("CSS selector extraction failed")
             return f"Unexpected error: {e}"
 
     @staticmethod
     def encode(array):
+        CommonModule.print_info_message("info", "Encoding array")
         combined_str = ''.join(array)
         unique_id = hashlib.md5(combined_str.encode()).hexdigest()
+        CommonModule.print_info_message("success", "Array encoded successfully")
         return unique_id
 
 class UrlCollector:
     def __init__(self, base_dir, project_name, site_name):
+        CommonModule.print_info_message("info", f"Initializing UrlCollector for project: {project_name} and site: {site_name}")
         self.base_dir = base_dir
         self.output_dir = ""
         self.collector_dir = ""
@@ -155,16 +182,18 @@ class UrlCollector:
         self.count = 0
 
     def write_url_in_txt(self, result_url):
+        CommonModule.print_info_message("info", f"Writing URLs to file for project: {self.project_name} and site: {self.site_name}")
         filepath = Path(self.output_dir) / f"{self.site_name}_{self.project_name}.txt"
         filepath.parent.mkdir(parents=True, exist_ok=True)
         with open(filepath, 'a') as file:
             for item in result_url:
                 file.write(f"{item}\n")
-        CommonModule.print_info_message("success", "Successfully written URLs")
+        CommonModule.print_info_message("success", f"URLs written to file successfully for project: {self.project_name} and site: {self.site_name}")
 
     def enter_count_in_sheet(self):
+        CommonModule.print_info_message("info", f"Entering count in sheet for project: {self.project_name} and site: {self.site_name}")
         if self.count <= 0:
-            CommonModule.print_info_message("Failure","No urls to enter in the sheet")
+            CommonModule.print_info_message("Failure","No URLs to enter in the sheet")
             return
         excel_file = Path(self.base_dir) / "url_collector" / "url_collector_count_sheet.xlsx"
         sheet_name = "collector_count"
@@ -186,9 +215,10 @@ class UrlCollector:
         sheet.cell(row=row_num, column=5, value=total_url_count)
 
         book.save(excel_file)
-        CommonModule.print_info_message("success", f"Data written to {excel_file}")
+        CommonModule.print_info_message("success", f"Data written to sheet successfully for project: {self.project_name} and site: {self.site_name}")
 
     def get_final_url(self, url, depth, current_depth_level, max_depth, module_instance):
+        CommonModule.print_info_message("info", f"Getting final URL for project: {self.project_name} and site: {self.site_name}")
         current_depth = depth[f"depth{current_depth_level}"]
         method_name = current_depth["method_name"]
         method_to_call = getattr(module_instance, method_name)
@@ -199,6 +229,7 @@ class UrlCollector:
             try:
                 result_url = method_to_call(i, depth, current_depth_level)
             except Exception as e:
+                CommonModule.print_error_message("error", f"URL fetching failed with error: {e}")
                 logging.exception("URL fetching failed")
                 continue
             if current_depth_level == max_depth:
@@ -208,6 +239,7 @@ class UrlCollector:
                 self.get_final_url(result_url, depth, current_depth_level + 1, max_depth, module_instance)
 
     def main_execution(self):
+        CommonModule.print_info_message("info", f"Starting main execution for project: {self.project_name} and site: {self.site_name}")
         try:
             yaml_file_path = Path(self.collector_dir) / f"{self.site_name}_{self.project_name}.yml"
             CommonModule.print_info_message("info", f"Loading configuration file: {yaml_file_path}")
@@ -240,7 +272,7 @@ class UrlCollector:
             raise
 
     def main(self):
-        CommonModule.print_info_message("info", f"Starting script execution of url_collector for {self.site_name}_{self.project_name}")
+        CommonModule.print_info_message("info", f"Starting script execution of url_collector for project: {self.project_name} and site: {self.site_name}")
         self.output_dir = Path(self.base_dir) / f"scrape_output/collector_output/{self.project_name}"
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.collector_dir = Path(self.base_dir) / f"url_collector/{self.project_name}"
@@ -251,12 +283,14 @@ class UrlCollector:
 
 class UrlFetcher:
     def __init__(self, base_dir, project_name, site_name):
+        CommonModule.print_info_message("info", f"Initializing UrlFetcher for project: {project_name} and site: {site_name}")
         self.base_dir = base_dir
         self.output_dir = ""
         self.project_name = project_name
         self.site_name = site_name
 
     def fetch_collector_output(self):
+        CommonModule.print_info_message("info", f"Fetching collector output for project: {self.project_name} and site: {self.site_name}")
         urls = []
         try:
             self.output_dir = Path(self.base_dir) / f"scrape_output/collector_output/{self.project_name}"
@@ -271,7 +305,7 @@ class UrlFetcher:
         return urls
 
     def main(self):
-        CommonModule.print_info_message("info", f"Starting script execution of url_fetcher for {self.site_name}_{self.project_name}")
+        CommonModule.print_info_message("info", f"Starting script execution of url_fetcher for project: {self.project_name} and site: {self.site_name}")
         yaml_file_path = Path(self.base_dir) / f"url_collector/{self.project_name}/{self.site_name}_{self.project_name}.yml"
         CommonModule.print_info_message("info", f"Loading configuration file: {yaml_file_path}")
         with open(yaml_file_path, 'r') as file:
@@ -312,6 +346,7 @@ class UrlFetcher:
 
 class UrlExtractor:
     def __init__(self, base_dir, project_name, site_name):
+        CommonModule.print_info_message("info", f"Initializing UrlExtractor for project: {project_name} and site: {site_name}")
         self.base_dir = base_dir
         self.project_name = project_name
         self.site_name = site_name
@@ -319,6 +354,7 @@ class UrlExtractor:
         self.count = 0
 
     def extract_records(self, output, page_doc, config, site_instance):
+        CommonModule.print_info_message("info", f"Extracting records for project: {self.project_name} and site: {self.site_name}")
         """
         Modify and extract multiple records from the page_doc using site-specific methods.
         Args:
@@ -347,9 +383,11 @@ class UrlExtractor:
                 else:
                     logging.warning(f"Method {method_name} not implemented for field {field}.")
             records.append(record)
+        CommonModule.print_info_message("success", f"Records extracted successfully for project: {self.project_name} and site: {self.site_name}")
         return records
 
     def main(self):
+        CommonModule.print_info_message("info", f"Starting script execution of url_extractor for project: {self.project_name} and site: {self.site_name}")
         try:
             yaml_file_path = self.extractor_dir / f"{self.project_name}/{self.site_name}_{self.project_name}.yml"
             CommonModule.print_info_message("info", f"Loading configuration file: {yaml_file_path}")

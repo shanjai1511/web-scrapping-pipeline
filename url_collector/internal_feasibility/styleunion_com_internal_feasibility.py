@@ -105,5 +105,3 @@ class StyleunionComInternalFeasibility(CommonModule):
         except Exception as e:
             print(f"Exception occurred: {e}")
         return product_url
-            
-            
